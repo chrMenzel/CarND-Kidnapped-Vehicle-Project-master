@@ -22,7 +22,7 @@ using std::string;
 using std::vector;
 
 // declaring a random engine
-static std::default_random_engine gen;
+std::default_random_engine gen;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
@@ -35,8 +35,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    */
   num_particles = 200;  // TODO: Set the number of particles
   weights.resize(num_particles);
-  
-  // Define normal distributions for sensor noise
+
+  // These line creates a normal (Gaussian) distribution for x, y and theta
   std::normal_distribution<double> distX(x, std[0]);
   std::normal_distribution<double> distY(y, std[1]);
   std::normal_distribution<double> distTheta(theta, std[2]);
@@ -63,6 +63,33 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+
+  for (int i = 0; i < num_particles; i++) {
+    double particleX = particles[i].x;
+    double particleY = particles[i].y;
+    double particleTheta = particles[i].theta;
+      
+    double predX, predY, predTheta;
+
+    // When yaw rate is not equal to zero, we have to use another calculation
+    if (fabs(yaw_rate) > 0.0001) {
+      predX = particleX + (velocity/yaw_rate) * (sin(particleTheta + (yaw_rate * delta_t)) - sin(particleTheta));
+      predY = particleY + (velocity/yaw_rate) * (cos(particleTheta) - cos(particleTheta + (yaw_rate * delta_t)));
+      predTheta = particleTheta + (yaw_rate * delta_t);
+    } else {
+      predX = particleX + velocity * cos(particleTheta) * delta_t;
+      predY = particleY + velocity * sin(particleTheta) * delta_t;
+      predTheta = particleTheta;
+    }
+      
+    std::normal_distribution<double> dist_x(predX, std_pos[0]);
+    std::normal_distribution<double> dist_y(predY, std_pos[1]);
+    std::normal_distribution<double> dist_theta(predTheta, std_pos[2]);
+      
+    particles[i].x = dist_x(gen);
+    particles[i].y = dist_y(gen);
+    particles[i].theta = dist_theta(gen);
+  }
 
 }
 
