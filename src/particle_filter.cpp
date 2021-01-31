@@ -21,6 +21,9 @@
 using std::string;
 using std::vector;
 
+// declaring a random engine
+static std::default_random_engine gen;
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
   /**
    * TODO: Set the number of particles. Initialize all particles to 
@@ -30,7 +33,24 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
    * NOTE: Consult particle_filter.h for more information about this method 
    *   (and others in this file).
    */
-  num_particles = 0;  // TODO: Set the number of particles
+  num_particles = 200;  // TODO: Set the number of particles
+  weights.resize(num_particles);
+  
+  // Define normal distributions for sensor noise
+  std::normal_distribution<double> distX(x, std[0]);
+  std::normal_distribution<double> distY(y, std[1]);
+  std::normal_distribution<double> distTheta(theta, std[2]);
+
+  // init particles
+  for (int i = 0; i < num_particles; i++) {
+    Particle p;
+
+    p.id, p.x, p.y, p.theta, p.weight = i, distX(gen), distY(gen), distTheta(gen), 1.0;
+    particles.push_back(p);
+    weights.push_back(p.weight);
+  }
+
+  is_initialized = true;
 
 }
 
