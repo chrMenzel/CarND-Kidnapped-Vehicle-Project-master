@@ -45,7 +45,12 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
   for (int i = 0; i < num_particles; i++) {
     Particle p;
 
-    p.id, p.x, p.y, p.theta, p.weight = i, distX(gen), distY(gen), distTheta(gen), 1.0;
+    p.id = i;
+    p.x = distX(gen);
+    p.y = distY(gen);
+    p.theta = distTheta(gen);
+    p.weight = 1.0;
+    
     particles.push_back(p);
     weights.push_back(p.weight);
   }
@@ -103,7 +108,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
-  for (int i = 0; i < observations.size(); i++) {
+  for (unsigned int i = 0; i < observations.size(); i++) {
     
     // grab current observation
     LandmarkObs o = observations[i];
@@ -113,7 +118,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
     // initialize id of landmark
     int closestLandmarkID = -1;
     
-    for (int j = 0; j < predicted.size(); j++) {
+    for (unsigned int j = 0; j < predicted.size(); j++) {
       
       // get distance between current/predicted landmarks (dist is a function in helper_functions)
       double currentDistance = dist(o.x, o.y, predicted[j].x, predicted[j].y);
@@ -133,7 +138,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                                    const vector<LandmarkObs> &observations, 
                                    const Map &map_landmarks) {
   /**
-   * TODO: Update the weights of each particle using a mult-variate Gaussian 
+   * TODO: Update the weights of each particle using a multi-variate Gaussian 
    *   distribution. You can read more about this distribution here: 
    *   https://en.wikipedia.org/wiki/Multivariate_normal_distribution
    * NOTE: The observations are given in the VEHICLE'S coordinate system. 
@@ -158,7 +163,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     double particleY = particles[i].y;
     double particleTheta = particles[i].theta;
 
-    for (int j = 0; j < observations.size(); j++) {
+    for (unsigned int j = 0; j < observations.size(); j++) {
       LandmarkObs transformedObs;
       transformedObs.id = j;
       transformedObs.x = particleX + (cos(particleTheta) * observations[j].x) - (sin(particleTheta) * observations[j].y);
@@ -169,7 +174,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     /* Step 2: Keep the landmarks which are in the sensor range of the current particle. */
     vector<LandmarkObs> predictedLandmarks;
 
-    for (int j = 0; j < map_landmarks.landmark_list.size(); j++) {
+    for (unsigned int j = 0; j < map_landmarks.landmark_list.size(); j++) {
 			double landmarkDistance = dist(particles[i].x, particles[i].y, map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f);
 
 			if (landmarkDistance<sensor_range) {
@@ -188,13 +193,12 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
     /* Step 4: Calculate and normalize the weights of all particles */
 		double probability = 1;
-		double mvgd;
 
-		for (int j = 0; j < predictedLandmarks.size(); j++) {
+		for (unsigned int j = 0; j < predictedLandmarks.size(); j++) {
 			int minimumID = -1;
       double minimumDistance = std::numeric_limits<double>::max();
 
-			for (int k = 0; k < transformedObservations.size(); k++) {
+			for (unsigned int k = 0; k < transformedObservations.size(); k++) {
 				double distance = dist(predictedLandmarks[j].x, predictedLandmarks[j].y, transformedObservations[k].x, transformedObservations[k].y);
 
 				if (distance < minimumDistance){
