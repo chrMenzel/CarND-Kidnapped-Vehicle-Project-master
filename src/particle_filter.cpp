@@ -103,7 +103,30 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper 
    *   during the updateWeights phase.
    */
+  for (int i = 0; i < observations.size(); i++) {
+    
+    // grab current observation
+    LandmarkObs o = observations[i];
 
+    // initialize minimum distance to maximum possible
+    double minDistance = std::numeric_limits<double>::max();
+    // initialize id of landmark
+    int closestLandmarkID = -1;
+    
+    for (int j = 0; j < predicted.size(); j++) {
+      
+      // get distance between current/predicted landmarks (dist is a function in helper_functions)
+      double currentDistance = dist(o.x, o.y, predicted[j].x, predicted[j].y);
+
+      // find the predicted landmark nearest the current observed landmark
+      if (currentDistance < minDistance) {
+        minDistance = currentDistance;
+        closestLandmarkID = predicted[j].id;
+      }
+    }
+
+    observations[i].id = closestLandmarkID;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
