@@ -146,18 +146,79 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
-  /*Step 1: Transform observations from vehicle coordinates to map coordinates.*/
+  weights.clear();
 
+  for (int i = 0; i < num_particles; i++) {
 
-  /*Step 2: Filter map landmarks. Keep those which are in the sensor_range of the current particle.*/
+    /* Step 1: Transform observations from vehicle coordinates to map coordinates.*/
+    // create a vector to hold the predicted map landmark locations
+    vector<LandmarkObs> transformedObservations;
 
+    double particleX = particles[i].x;
+    double particleY = particles[i].y;
+    double particleTheta = particles[i].theta;
 
-  /*Step 3: Associate observations to predicted landmarks using nearest neighbor algorithm and calculate 
-            the weight of each particle using Multivariate Gaussian distribution.
-  */
+    for (int j = 0; j < observations.size(); j++) {
+      LandmarkObs transformedObs;
+      transformedObs.id = j;
+      transformedObs.x = particleX + (cos(particleTheta) * observations[j].x) - (sin(particleTheta) * observations[j].y);
+      transformedObs.y = particleY + (sin(particleTheta) * observations[j].x) + (cos(particleTheta) * observations[j].y);
+      transformedObservations.push_back(transformedObs);
+    }
 
+    /* Step 2: Keep the landmarks which are in the sensor range of the current particle. */
+    vector<LandmarkObs> predictedLandmarks;
 
-  /*Step 4: Normalize the weights of all particles since resmapling using probabilistic approach.*/
+    for (int j = 0; j < map_landmarks.landmark_list.size(); j++) {
+			double landmarkDistance = dist(particles[i].x, particles[i].y, map_landmarks.landmark_list[j].x_f, map_landmarks.landmark_list[j].y_f);
+
+			if (landmarkDistance<sensor_range) {
+				LandmarkObs predictedLandmark;
+				predictedLandmark.id = map_landmarks.landmark_list[j].id_i;
+				predictedLandmark.x = map_landmarks.landmark_list[j].x_f;
+				predictedLandmark.y = map_landmarks.landmark_list[j].y_f;
+        predictedLandmarks.push_back(predictedLandmark);
+      }
+    }
+
+    /* Step 3: Associate observations to predicted landmarks using nearest neighbor algorithm and calculate 
+               the weight of each particle using Multivariate Gaussian distribution.
+    */
+    dataAssociation(predictedLandmarks, transformedObservations);
+
+    /* Step 4: Calculate and normalize the weights of all particles */
+		double probability = 1;
+		double mvgd;
+
+		for (int j = 0; j < predictedLandmarks.size(); j++) {
+			int minimumID = -1;
+      double minimumDistance = std::numeric_limits<double>::max();
+
+			for (int k = 0; k < transformedObservations.size(); k++) {
+				double distance = dist(predictedLandmarks[j].x, predictedLandmarks[j].y, transformedObservations[k].x, transformedObservations[k].y);
+
+				if (distance < minimumDistance){
+					minimumDistance = distance;
+					minimumID = k;
+				}
+			}
+
+			if (minimumID != -1){
+				probability *= exp(-((predictedLandmarks[j].x - transformedObservations[minimumID].x) * 
+                       (predictedLandmarks[j].x - transformedObservations[minimumID].x) / 
+                       (2 * std_landmark[0] * std_landmark[0]) +
+                       (predictedLandmarks[j].y - transformedObservations[minimumID].y) *
+                       (predictedLandmarks[j].y - transformedObservations[minimumID].y) /
+                       (2 * std_landmark[1] * std_landmark[1]))) /
+                       (2.0 * M_PI * std_landmark[0] * std_landmark[1]);
+
+			}
+		}
+
+		weights.push_back(probability);
+		particles[i].weight = probability;
+
+  }
 
 }
 
