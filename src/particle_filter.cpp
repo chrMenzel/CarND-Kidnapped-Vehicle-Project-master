@@ -146,6 +146,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
 
+  /*Step 1: Transform observations from vehicle coordinates to map coordinates.*/
+
+
+  /*Step 2: Filter map landmarks. Keep those which are in the sensor_range of the current particle.*/
+
+
+  /*Step 3: Associate observations to predicted landmarks using nearest neighbor algorithm and calculate 
+            the weight of each particle using Multivariate Gaussian distribution.
+  */
+
+
+  /*Step 4: Normalize the weights of all particles since resmapling using probabilistic approach.*/
+
 }
 
 void ParticleFilter::resample() {
